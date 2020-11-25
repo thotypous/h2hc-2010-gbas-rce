@@ -6,3 +6,6 @@ Este repositório contém arquivos relacionados a uma palestra proferida durante
  * [Correção](fix) das vulnerabilidade reportadas.
  * [Apresentação](apresentacao/2010-h2hc-explorando-applets.pdf) do H2HC.
 
+# Implementação alternativa do GbAs
+
+Originalmente, encontrei essa vulnerabilidade enquanto eu desenvolvia uma implementação alternativa do GbAs, que pode ser encontrada no repositório [operagbas](https://github.com/thotypous/operagbas).
