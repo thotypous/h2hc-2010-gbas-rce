@@ -1,0 +1,19 @@
+import os
+PageProps = {
+  1: {
+       'progress':False,
+       'reset':'FirstTimeOnly'
+     },
+  6: {
+       'video': "operagbas.mp4",
+       'always': True
+     },
+  7: {
+       'video': "operagbas2.mp4",
+       'always': True
+     },
+#  21: {
+#       'OnEnter': lambda:os.system('VirtualBox')
+#     }
+}
+AvailableTransitions = [Crossfade]
